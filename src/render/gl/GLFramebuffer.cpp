@@ -42,8 +42,13 @@ bool CGLFramebuffer::internalAlloc(int w, int h, uint32_t drmFormat) {
         glTexImage2D(GL_TEXTURE_2D, 0, format->glInternalFormat ? format->glInternalFormat : format->glFormat, w, h, 0, format->glFormat, format->glType, nullptr);
         glBindFramebuffer(GL_FRAMEBUFFER, m_fb);
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_mirrorTex->m_texID, 0);
-    } else
+        const GLenum DRAW_BUFFERS[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
+        glDrawBuffers(2, DRAW_BUFFERS);
+    } else {
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, 0, 0);
+        const GLenum DRAW_BUFFERS[] = {GL_COLOR_ATTACHMENT0};
+        glDrawBuffers(1, DRAW_BUFFERS);
+    }
 
     if (m_stencilTex && m_stencilTex->ok()) {
         m_stencilTex->bind();
