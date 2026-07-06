@@ -756,20 +756,37 @@ void CHyprOpenGLImpl::begin(PHLMONITOR pMonitor, const CRegion& damage_, SP<IFra
     g_pHyprRenderer->m_renderData.mainFB = g_pHyprRenderer->m_renderData.currentFB;
     g_pHyprRenderer->m_renderData.outFB  = fb ? fb : dc<CHyprGLRenderer*>(g_pHyprRenderer.get())->m_currentRenderbuffer->getFB();
 
-    if UNLIKELY (g_pHyprRenderer->m_renderData.pMonitor->needsUnmodifiedCopy() && !m_fakeFrame) {
-        if (!g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex) {
-            GLenum buffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1};
-            glDrawBuffers(2, buffers);
+    const bool WANTS_MIRROR       = g_pHyprRenderer->m_renderData.pMonitor->needsUnmodifiedCopy();
+    bool       mirrorStateChanged = false;
+
+    if UNLIKELY (WANTS_MIRROR && !m_fakeFrame) {
+        if (!g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex)
             g_pHyprRenderer->m_renderData.pMonitor->resources()->enableMirror();
+
+        if (g_pHyprRenderer->m_renderData.mainFB->getMirrorTexture() != g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex) {
+            g_pHyprRenderer->m_renderData.mainFB->enableMirror(g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex);
+            mirrorStateChanged = true;
         }
-        g_pHyprRenderer->m_renderData.mainFB->enableMirror(g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex);
     } else {
-        if (g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex) {
-            GLenum buffers[] = {GL_COLOR_ATTACHMENT0};
-            glDrawBuffers(1, buffers);
+        if (!WANTS_MIRROR && g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex)
             g_pHyprRenderer->m_renderData.pMonitor->resources()->disableMirror();
+
+        if (g_pHyprRenderer->m_renderData.mainFB->getMirrorTexture()) {
+            g_pHyprRenderer->m_renderData.mainFB->disableMirror();
+            mirrorStateChanged = true;
         }
-        g_pHyprRenderer->m_renderData.mainFB->disableMirror();
+    }
+
+    if UNLIKELY (mirrorStateChanged) {
+        g_pHyprRenderer->bindFB(g_pHyprRenderer->m_renderData.currentFB);
+        if (!m_fakeFrame) {
+            const auto& PMONITOR = g_pHyprRenderer->m_renderData.pMonitor;
+            if (PMONITOR->m_forceFullFrames < 1)
+                PMONITOR->m_forceFullFrames = 1;
+            g_pHyprRenderer->m_renderData.damage.set(CRegion{0, 0, PMONITOR->m_transformedSize.x, PMONITOR->m_transformedSize.y});
+            g_pHyprRenderer->m_renderData.finalDamage.set(CRegion{0, 0, PMONITOR->m_transformedSize.x, PMONITOR->m_transformedSize.y});
+            GLFB(g_pHyprRenderer->m_renderData.currentFB)->clearAfterInvalidation();
+        }
     }
 
     g_pHyprRenderer->pushMonitorTransformEnabled(false);
