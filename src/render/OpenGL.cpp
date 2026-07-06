@@ -2540,8 +2540,8 @@ void CHyprOpenGLImpl::renderInnerGlow(const CBox& box, int round, float rounding
 }
 
 bool CHyprOpenGLImpl::saveBufferForMirror(const CBox& box) {
-    const auto TEX = g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex ? g_pHyprRenderer->m_renderData.pMonitor->resources()->m_mirrorTex :
-                                                                                        g_pHyprRenderer->m_renderData.currentFB->getTexture();
+    const auto TEX =
+        g_pHyprRenderer->m_renderData.mainFB->getMirrorTexture() ? g_pHyprRenderer->m_renderData.mainFB->getMirrorTexture() : g_pHyprRenderer->m_renderData.currentFB->getTexture();
     if (!TEX) {
         Log::logger->log(Log::ERR, "Invalid source texture for mirror");
         return false;
