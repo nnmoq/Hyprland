@@ -797,7 +797,6 @@ void CHyprOpenGLImpl::end() {
             m_renderData.pMonitor->m_zoomController.m_resetCameraState = true;
         m_renderData.pMonitor->m_zoomController.applyZoomTransform(monbox, m_renderData);
 
-        m_applyFinalShader = !g_pHyprRenderer->m_renderData.blockScreenShader;
         if UNLIKELY (g_pHyprRenderer->m_renderData.mouseZoomFactor != 1.F && g_pHyprRenderer->m_renderData.mouseZoomUseMouse && *PZOOMDISABLEAA)
             g_pHyprRenderer->m_renderData.useNearestNeighbor = true;
 
@@ -809,6 +808,8 @@ void CHyprOpenGLImpl::end() {
             else
                 g_pHyprRenderer->m_renderData.pMonitor->resources()->invalidateMirrorFB();
         }
+
+        m_applyFinalShader = !g_pHyprRenderer->m_renderData.blockScreenShader;
 
         const auto TEX = g_pHyprRenderer->m_renderData.currentFB->getTexture();
         g_pHyprRenderer->bindFB(g_pHyprRenderer->m_renderData.outFB);
