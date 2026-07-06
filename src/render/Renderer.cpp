@@ -1934,6 +1934,15 @@ SCMSettings IHyprRenderer::getCMSettings(const NColorManagement::PImageDescripti
         .sdrBrightnessMultiplier = needsSDRmod && m_renderData.pMonitor->m_sdrBrightness > 0 ? m_renderData.pMonitor->m_sdrBrightness : 1.0f,
     };
 
+    if (imageDescription->value().transferFunction == NColorManagement::CM_TRANSFER_FUNCTION_EXT_LINEAR && !imageDescription->value().windowsScRGB &&
+        (targetImageDescription->value().transferFunction == NColorManagement::CM_TRANSFER_FUNCTION_SRGB ||
+         targetImageDescription->value().transferFunction == NColorManagement::CM_TRANSFER_FUNCTION_GAMMA22) &&
+        m_renderData.pMonitor->inHDR()) {
+        const float SDR_BOOST = m_renderData.pMonitor->m_sdrBrightness > 0 ? m_renderData.pMonitor->m_sdrBrightness : 1.F;
+        result.dstTFRange     = {.min = sdrMinLuminance * SDR_BOOST, .max = sdrMaxLuminance * SDR_BOOST};
+        result.needsTonemap   = false;
+    }
+
     m_cmSettingsCache.push_back({
         .srcDescId       = srcId,
         .dstDescId       = dstId,
