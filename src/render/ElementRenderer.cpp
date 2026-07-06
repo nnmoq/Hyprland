@@ -212,7 +212,8 @@ void IElementRenderer::drawPreBlur(WP<CPreBlurElement> element, const CRegion& d
 }
 
 void IElementRenderer::drawClear(WP<CClearPassElement> element, const CRegion& damage) {
-    element->m_data.color = g_pHyprRenderer->getConvertedColor(element->m_data.color); // FIXME create element copy?
+    element->m_data.colorMirror = element->m_data.color;
+    element->m_data.color       = g_pHyprRenderer->getConvertedColor(element->m_data.color); // FIXME create element copy?
     draw(element, damage);
 }
 

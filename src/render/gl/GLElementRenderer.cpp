@@ -26,15 +26,25 @@ void CGLElementRenderer::draw(WP<CClearPassElement> element, const CRegion& dama
     TRACY_GPU_ZONE("RenderClear");
     const std::array<GLfloat, 4> c = {sc<GLfloat>(color.r), sc<GLfloat>(color.g), sc<GLfloat>(color.b), sc<GLfloat>(color.a)};
 
+    const auto&                  colorMirror = element->m_data.colorMirror;
+    const std::array<GLfloat, 4> cMirror     = {sc<GLfloat>(colorMirror.r), sc<GLfloat>(colorMirror.g), sc<GLfloat>(colorMirror.b), sc<GLfloat>(colorMirror.a)};
+    const bool                   CLEAR_MIRROR =
+        g_pHyprRenderer->m_renderData.pMonitor->needsUnmodifiedCopy() && g_pHyprRenderer->m_renderData.currentFB && g_pHyprRenderer->m_renderData.currentFB->getMirrorTexture();
+
     if (!g_pHyprRenderer->m_renderData.damage.empty()) {
-        g_pHyprRenderer->m_renderData.damage.forEachRect([&c](const auto& RECT) {
+        g_pHyprRenderer->m_renderData.damage.forEachRect([&c, &cMirror, CLEAR_MIRROR](const auto& RECT) {
             g_pHyprOpenGL->scissor(&RECT, g_pHyprRenderer->m_renderData.transformDamage);
             glClearBufferfv(GL_COLOR, 0, c.data());
+            if (CLEAR_MIRROR)
+                glClearBufferfv(GL_COLOR, 1, cMirror.data());
         });
 
         g_pHyprOpenGL->scissor(nullptr);
-    } else
+    } else {
         glClearBufferfv(GL_COLOR, 0, c.data());
+        if (CLEAR_MIRROR)
+            glClearBufferfv(GL_COLOR, 1, cMirror.data());
+    }
 };
 
 void CGLElementRenderer::draw(WP<CFramebufferElement> element, const CRegion& damage) {
