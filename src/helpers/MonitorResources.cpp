@@ -17,6 +17,9 @@ CMonitorResources::CMonitorResources(WP<CMonitor> monitor, DRMFormat format, Vec
     m_imageDescription(imageDescription) {
     initFB(m_blurFB);
     monitor->m_blurFBDirty = true;
+
+    if (monitor->m_forceFullFrames < 1)
+        monitor->m_forceFullFrames = 1;
 }
 
 void CMonitorResources::initFB(SP<Render::IFramebuffer> fb) {
